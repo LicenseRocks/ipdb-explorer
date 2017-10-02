@@ -3,16 +3,22 @@ import 'whatwg-fetch'
 
 class SearchHistory extends Component {
   render () {
-    const { history, selectTx } = this.props
+    const { history, historyPointer, selectTx } = this.props
     return <div>
       <h5>Search History</h5>
-      <ul className='list-unstyled'>
+      <div className='list-group'>
         {history.map((tx, key) => {
-          return <li key={key}>
-            <pre><button className='btn btn-secondary btn-block truncate' onClick={() => { selectTx(tx.id) }}>{tx.id}</button></pre>
-          </li>
+          let className = 'list-group-item list-group-item-action truncate'
+          if (tx === history[historyPointer]) {
+            className = className + ' active'
+          }
+          return <pre>
+            <a href='#' className={className} onClick={() => { selectTx(key) }}>
+              {tx.contents.id}
+            </a>
+          </pre>
         })}
-      </ul>
+      </div>
     </div>
   }
 }
@@ -66,7 +72,13 @@ class Input extends Component {
       <h6>Owners Before</h6>
       <ul className='list-unstyled'>
         {(owners_before).map((ownerBefore, key) => {
-          return <li key={key}><pre>{ownerBefore}</pre></li>
+          return <li key={key}>
+            <pre>
+              <button className='btn btn-secondary btn-block truncate'>
+                {ownerBefore}
+              </button>
+            </pre>
+          </li>
         })}
       </ul>
       {
@@ -90,7 +102,13 @@ class Output extends Component {
       <h6>Public Keys</h6>
       <ul className='list-unstyled'>
         {(public_keys).map((publicKey, key) => {
-          return <li key={key}><pre>{publicKey}</pre></li>
+          return <li key={key}>
+            <pre>
+              <button className='btn btn-secondary btn-block truncate'>
+                {publicKey}
+              </button>
+            </pre>
+          </li>
         })}
       </ul>
       <h6>Amount</h6>
@@ -168,7 +186,13 @@ class Tx extends Component {
 class App extends Component {
   constructor (props) {
     super(props)
-    this.state = { tx: null, isSearching: false, errors: {}, history: [] }
+    this.state = {
+      tx: null,
+      isSearching: false,
+      errors: {},
+      history: [],
+      historyPointer: -1
+    }
   }
 
   hasErrors () {
@@ -195,11 +219,11 @@ class App extends Component {
             this.setState({isSearching: false, errors: json})
           })
         } else {
-          response.json().then(json => {
+          response.json().then(contents => {
             this.setState({
               isSearching: false,
-              tx: json,
-              history: this.state.history.concat(json),
+              history: [...this.state.history, { type: 'tx', contents }],
+              historyPointer: this.state.historyPointer + 1,
               errors: {}
             })
           })
@@ -208,21 +232,16 @@ class App extends Component {
       .catch(response => { console.log(response) })
   }
 
-  selectTx (txId) {
-    const { history } = this.state
-    const selectedTx = history.find(_tx => {
-      return _tx.id === txId
-    })
-    this.setState({
-      tx: selectedTx
-    })
+  selectTx (historyPointer) {
+    this.setState({ historyPointer })
   }
 
   render () {
-    const { tx, isSearching, history } = this.state
+    const { isSearching, history, historyPointer } = this.state
+    const [ tx ] = history.slice(historyPointer)
     let result = null
     if (tx) {
-      result = <Tx tx={tx} findTx={this.findTx.bind(this)} />
+      result = <Tx tx={tx.contents} findTx={this.findTx.bind(this)} />
     }
     return (
       <div className='row'>
@@ -238,7 +257,7 @@ class App extends Component {
             <Search isSearching={isSearching} findTx={this.findTx.bind(this)} />
             {
               history.length > 0 &&
-                <SearchHistory history={history} selectTx={this.selectTx.bind(this)} />
+                <SearchHistory history={history} historyPointer={historyPointer} selectTx={this.selectTx.bind(this)} />
             }
           </div>
         </div>
