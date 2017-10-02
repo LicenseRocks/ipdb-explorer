@@ -12,8 +12,8 @@ class SearchHistory extends Component {
           if (tx === history[historyPointer]) {
             className = className + ' active'
           }
-          return <pre>
-            <a key={key} href='#' className={className} onClick={() => { selectTx(key) }}>
+          return <pre key={key}>
+            <a href='#' className={className} onClick={() => { selectTx(key) }}>
               {key + 1}. {tx.contents.id}
             </a>
           </pre>
