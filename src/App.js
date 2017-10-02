@@ -184,7 +184,7 @@ class App extends Component {
   }
 
   render () {
-    const { tx, isSearching, errors } = this.state
+    const { tx, isSearching } = this.state
     let result = null
     if (tx) {
       result = <Tx tx={tx} findTx={this.findTx.bind(this)} />
