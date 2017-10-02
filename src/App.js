@@ -199,7 +199,8 @@ class App extends Component {
             this.setState({
               isSearching: false,
               tx: json,
-              history: this.state.history.concat(json)
+              history: this.state.history.concat(json),
+              errors: {}
             })
           })
         }
