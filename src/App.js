@@ -245,6 +245,7 @@ class App extends Component {
     }
     return (
       <div className='row'>
+        <div className='col-sm-3' />
         <div className='col-sm-3 sidebar'>
           <div className='mt-2'>
             <h3 className='text-center'>IPDB-Explorer</h3>

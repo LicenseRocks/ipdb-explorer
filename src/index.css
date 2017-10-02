@@ -4,5 +4,11 @@
   text-overflow: ellipsis;
 }
 
-.sidebar {
+@media (min-width: 576px) {
+  .sidebar {
+    background: #eee;
+    border-right: 1px solid #ddd;
+    position: fixed !important;
+    height: 100%;
+  }
 }
