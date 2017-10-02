@@ -38,20 +38,22 @@ class Search extends Component {
   render () {
     const { txId } = this.state
     const { isSearching } = this.props
-    return <div className='form-group text-center'>
-      <input type='text' className='form-control mb-2' placeholder='Enter your Tx' value={txId} onChange={this.changeTx.bind(this)} />
-      {
-        isSearching &&
-          <button className='btn btn-primary' disabled type='button'>
-            <span className='fa fa-spin fa-cog' /> Searching
-          </button>
-      }
-      {
-        !isSearching &&
-          <button className='btn btn-primary' type='button' onClick={this.findTx.bind(this)}>
-            <span className='fa fa-search' /> Find
-          </button>
-      }
+    return <div className='input-group my-2'>
+      <input type='text' className='form-control' placeholder='Enter your Tx' value={txId} onChange={this.changeTx.bind(this)} />
+      <span className='input-group-btn'>
+        {
+          isSearching &&
+            <button className='btn btn-primary' disabled type='button'>
+              <span className='fa fa-spin fa-cog' /> Searching
+            </button>
+        }
+        {
+          !isSearching &&
+            <button className='btn btn-primary' type='button' onClick={this.findTx.bind(this)}>
+              <span className='fa fa-search' /> Tx
+            </button>
+        }
+      </span>
     </div>
   }
 }
@@ -222,10 +224,10 @@ class App extends Component {
       result = <Tx tx={tx} findTx={this.findTx.bind(this)} />
     }
     return (
-      <div className={tx ? 'row' : 'row justify-content-md-center'}>
-        <div className='col-md-4'>
-          <div className={tx ? 'mt-2' : 'mt-5'}>
-            <h1 className='text-center'>IPDB-Explorer</h1>
+      <div className='row'>
+        <div className='col-sm-3 sidebar'>
+          <div className='mt-2'>
+            <h3 className='text-center'>IPDB-Explorer</h3>
             {
               this.hasErrors() &&
                 <div className='alert alert-info'>
@@ -239,7 +241,9 @@ class App extends Component {
             }
           </div>
         </div>
-        {result}
+        <div className='col-sm-9 mt-2'>
+          {result}
+        </div>
       </div>
     )
   }
