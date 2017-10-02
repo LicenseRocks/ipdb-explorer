@@ -152,7 +152,12 @@ class Tx extends Component {
 class App extends Component {
   constructor (props) {
     super(props)
-    this.state = { tx: null, isSearching: false }
+    this.state = { tx: null, isSearching: false, errors: {} }
+  }
+
+  hasErrors () {
+    const { errors } = this.state
+    return Object.keys(errors).length > 1
   }
 
   findTx (txId) {
@@ -170,18 +175,16 @@ class App extends Component {
     )
       .then(response => {
         if (!response.ok) {
-          response.json().then(json => { console.log(json) })
-          this.setState({isSearching: false})
+          response.json().then(json => this.setState({isSearching: false, errors: json}))
         } else {
-          response.json().then(json => this.setState({tx: json}))
-          this.setState({isSearching: false})
+          response.json().then(json => this.setState({isSearching: false, tx: json}))
         }
       })
       .catch(response => { console.log(response) })
   }
 
   render () {
-    const { tx, isSearching } = this.state
+    const { tx, isSearching, errors } = this.state
     let result = null
     if (tx) {
       result = <Tx tx={tx} findTx={this.findTx.bind(this)} />
@@ -191,6 +194,12 @@ class App extends Component {
         <div className='col-md-4'>
           <div className='mt-5'>
             <h1 className='text-center'>IPDB-Explorer</h1>
+            {
+              this.hasErrors() &&
+                <div className='alert alert-info'>
+                  Couldn't find anything - sorry!
+                </div>
+            }
             <Search isSearching={isSearching} findTx={this.findTx.bind(this)} />
           </div>
         </div>
