@@ -20,7 +20,7 @@ class SearchHistory extends Component {
 class Search extends Component {
   constructor (props) {
     super(props)
-    this.state = { txId: '159774426470c983bc32d2cacd609bae652fb82f2373da6024c30fb36364c6ea' }
+    this.state = { txId: '6cf011722b0a79d77a9ea1f85a2c717e650d9000afd285f1868676cab15f5632' }
   }
 
   changeTx (e) {
@@ -179,7 +179,7 @@ class App extends Component {
   findTx (txId) {
     this.setState({isSearching: true})
     fetch(
-      `https://test.ipdb.io/api/v1/transactions/${txId}`, {
+      `http://localhost:9985/api/v1/transactions/${txId}`, {
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
