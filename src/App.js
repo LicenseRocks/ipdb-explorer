@@ -1,11 +1,11 @@
 import React, { Component } from 'react'
 import 'whatwg-fetch'
 
-class SearchHistory extends Component {
+class TransactionHistory extends Component {
   render () {
     const { history, historyPointer, selectTx } = this.props
     return <div>
-      <h5>Search History</h5>
+      <h5>Transactions</h5>
       <div className='list-group'>
         {history.map((tx, key) => {
           let className = 'list-group-item list-group-item-action truncate'
@@ -148,6 +148,9 @@ class Tx extends Component {
   render () {
     const { tx, findTx } = this.props
     return <div>
+      <h3>
+        <pre className='truncate'>{ tx.id }</pre>
+      </h3>
       <h5>Inputs</h5>
       <ul className='list-unstyled'>
         {this.inputs()}
@@ -258,7 +261,7 @@ class App extends Component {
             <Search isSearching={isSearching} findTx={this.findTx.bind(this)} />
             {
               history.length > 0 &&
-                <SearchHistory history={history} historyPointer={historyPointer} selectTx={this.selectTx.bind(this)} />
+                <TransactionHistory history={history} historyPointer={historyPointer} selectTx={this.selectTx.bind(this)} />
             }
           </div>
         </div>
