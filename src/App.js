@@ -1,10 +1,6 @@
 import React, { Component } from 'react'
 import 'whatwg-fetch'
 
-function shortHash (hsh) {
-  return hsh.slice(0, 7) + '...'
-}
-
 class SearchHistory extends Component {
   render () {
     const { history, selectTx } = this.props
@@ -13,7 +9,7 @@ class SearchHistory extends Component {
       <ul className='list-unstyled'>
         {history.map((tx, key) => {
           return <li key={key}>
-            <pre><button className='btn btn-secondary btn-block' onClick={() => { selectTx(tx.id) }}>{shortHash(tx.id)}</button></pre>
+            <pre><button className='btn btn-secondary btn-block truncate' onClick={() => { selectTx(tx.id) }}>{tx.id}</button></pre>
           </li>
         })}
       </ul>
@@ -76,7 +72,7 @@ class Input extends Component {
           <div>
             <h6>Fulfillments</h6>
             <ul className='list-unstyled'>
-              <li><pre><button className='btn btn-secondary' onClick={() => { findTx(fulfills.transaction_id) }}>{shortHash(fulfills.transaction_id)}</button></pre></li>
+              <li><pre><button className='btn btn-secondary btn-block truncate' onClick={() => { findTx(fulfills.transaction_id) }}>{fulfills.transaction_id}</button></pre></li>
             </ul>
           </div>
       }
@@ -131,39 +127,37 @@ class Tx extends Component {
 
   render () {
     const { tx, findTx } = this.props
-    return <div className='card'>
-      <div className='card-body'>
-        <h5>Inputs</h5>
-        <ul className='list-unstyled'>
-          {this.inputs()}
-        </ul>
-        <h5>Outputs</h5>
-        <ul className='list-unstyled'>
-          {this.outputs()}
-        </ul>
-        <h5>Operation</h5>
-        <pre><pre>{tx.operation}</pre></pre>
-        <h5>Asset</h5>
-        <div className='p-4 bg-light border border-secondary mb-2'>
-          {
-            this.isTransfer() &&
-              <pre><button className='btn btn-secondary' onClick={() => { findTx(tx.asset.id) }}>{shortHash(tx.asset.id)}</button></pre>
-          }
-          {
-            this.isCreate() &&
-              <div>
-                <pre><small>{ JSON.stringify(tx.asset, null, 2)}</small></pre>
-              </div>
-          }
-        </div>
-        <h5>Meta</h5>
-        <div className='p-4 bg-light border border-secondary'>
-          { !tx.meta && '-'}
-          {
-            tx.meta &&
-              <pre><small>{ JSON.stringify(tx.meta, null, 2)}</small></pre>
-          }
-        </div>
+    return <div>
+      <h5>Inputs</h5>
+      <ul className='list-unstyled'>
+        {this.inputs()}
+      </ul>
+      <h5>Outputs</h5>
+      <ul className='list-unstyled'>
+        {this.outputs()}
+      </ul>
+      <h5>Operation</h5>
+      <pre><pre>{tx.operation}</pre></pre>
+      <h5>Asset</h5>
+      <div className='p-4 bg-light border border-secondary mb-2'>
+        {
+          this.isTransfer() &&
+            <pre><button className='btn btn-secondary btn-block truncate' onClick={() => { findTx(tx.asset.id) }}>{tx.asset.id}</button></pre>
+        }
+        {
+          this.isCreate() &&
+            <div>
+              <pre><small>{ JSON.stringify(tx.asset, null, 2)}</small></pre>
+            </div>
+        }
+      </div>
+      <h5>Meta</h5>
+      <div className='p-4 bg-light border border-secondary'>
+        { !tx.meta && '-'}
+        {
+          tx.meta &&
+            <pre><small>{ JSON.stringify(tx.meta, null, 2)}</small></pre>
+        }
       </div>
     </div>
   }
