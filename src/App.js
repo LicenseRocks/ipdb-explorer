@@ -1,6 +1,26 @@
 import React, { Component } from 'react'
 import 'whatwg-fetch'
 
+function shortHash (hsh) {
+  return hsh.slice(0, 7) + '...'
+}
+
+class SearchHistory extends Component {
+  render () {
+    const { history, findTx } = this.props
+    return <div>
+      <h5>Search History</h5>
+      <ul className='list-unstyled'>
+        {history.map((tx, key) => {
+          return <li key={key}>
+            <pre><button className='btn btn-secondary btn-block' onClick={() => { findTx(tx.id) }}>{shortHash(tx.id)}</button></pre>
+          </li>
+        })}
+      </ul>
+    </div>
+  }
+}
+
 class Search extends Component {
   constructor (props) {
     super(props)
@@ -56,7 +76,7 @@ class Input extends Component {
           <div>
             <h6>Fulfillments</h6>
             <ul className='list-unstyled'>
-              <li><pre><button className='btn btn-link' onClick={() => { findTx(fulfills.transaction_id) }}>{fulfills.transaction_id}</button></pre></li>
+              <li><pre><button className='btn btn-secondary' onClick={() => { findTx(fulfills.transaction_id) }}>{shortHash(fulfills.transaction_id)}</button></pre></li>
             </ul>
           </div>
       }
@@ -110,7 +130,7 @@ class Tx extends Component {
   }
 
   render () {
-    const { tx } = this.props
+    const { tx, findTx } = this.props
     return <div className='card'>
       <div className='card-body'>
         <h5>Inputs</h5>
@@ -127,7 +147,7 @@ class Tx extends Component {
         <div className='p-4 bg-light border border-secondary mb-2'>
           {
             this.isTransfer() &&
-              <pre><strong>Tx</strong> {tx.asset.id}</pre>
+              <pre><button className='btn btn-secondary' onClick={() => { findTx(tx.asset.id) }}>{shortHash(tx.asset.id)}</button></pre>
           }
           {
             this.isCreate() &&
@@ -152,7 +172,7 @@ class Tx extends Component {
 class App extends Component {
   constructor (props) {
     super(props)
-    this.state = { tx: null, isSearching: false, errors: {} }
+    this.state = { tx: null, isSearching: false, errors: {}, history: [] }
   }
 
   hasErrors () {
@@ -175,16 +195,24 @@ class App extends Component {
     )
       .then(response => {
         if (!response.ok) {
-          response.json().then(json => this.setState({isSearching: false, errors: json}))
+          response.json().then(json => {
+            this.setState({isSearching: false, errors: json})
+          })
         } else {
-          response.json().then(json => this.setState({isSearching: false, tx: json}))
+          response.json().then(json => {
+            this.setState({
+              isSearching: false,
+              tx: json,
+              history: this.state.history.concat(json)
+            })
+          })
         }
       })
       .catch(response => { console.log(response) })
   }
 
   render () {
-    const { tx, isSearching } = this.state
+    const { tx, isSearching, history } = this.state
     let result = null
     if (tx) {
       result = <Tx tx={tx} findTx={this.findTx.bind(this)} />
@@ -201,6 +229,10 @@ class App extends Component {
                 </div>
             }
             <Search isSearching={isSearching} findTx={this.findTx.bind(this)} />
+            {
+              history.length > 0 &&
+                <SearchHistory history={history} findTx={this.findTx.bind(this)} />
+            }
           </div>
         </div>
         {result}
