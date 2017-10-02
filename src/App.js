@@ -7,13 +7,13 @@ function shortHash (hsh) {
 
 class SearchHistory extends Component {
   render () {
-    const { history, findTx } = this.props
+    const { history, selectTx } = this.props
     return <div>
       <h5>Search History</h5>
       <ul className='list-unstyled'>
         {history.map((tx, key) => {
           return <li key={key}>
-            <pre><button className='btn btn-secondary btn-block' onClick={() => { findTx(tx.id) }}>{shortHash(tx.id)}</button></pre>
+            <pre><button className='btn btn-secondary btn-block' onClick={() => { selectTx(tx.id) }}>{shortHash(tx.id)}</button></pre>
           </li>
         })}
       </ul>
@@ -211,6 +211,16 @@ class App extends Component {
       .catch(response => { console.log(response) })
   }
 
+  selectTx (txId) {
+    const { history } = this.state
+    const selectedTx = history.find(_tx => {
+      return _tx.id === txId
+    })
+    this.setState({
+      tx: selectedTx
+    })
+  }
+
   render () {
     const { tx, isSearching, history } = this.state
     let result = null
@@ -218,9 +228,9 @@ class App extends Component {
       result = <Tx tx={tx} findTx={this.findTx.bind(this)} />
     }
     return (
-      <div className='row justify-content-md-center'>
+      <div className={tx ? 'row' : 'row justify-content-md-center'}>
         <div className='col-md-4'>
-          <div className='mt-5'>
+          <div className={tx ? 'mt-2' : 'mt-5'}>
             <h1 className='text-center'>IPDB-Explorer</h1>
             {
               this.hasErrors() &&
@@ -231,7 +241,7 @@ class App extends Component {
             <Search isSearching={isSearching} findTx={this.findTx.bind(this)} />
             {
               history.length > 0 &&
-                <SearchHistory history={history} findTx={this.findTx.bind(this)} />
+                <SearchHistory history={history} selectTx={this.selectTx.bind(this)} />
             }
           </div>
         </div>
