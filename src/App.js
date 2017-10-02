@@ -13,8 +13,8 @@ class SearchHistory extends Component {
             className = className + ' active'
           }
           return <pre>
-            <a href='#' className={className} onClick={() => { selectTx(key) }}>
-              {tx.contents.id}
+            <a key={key} href='#' className={className} onClick={() => { selectTx(key) }}>
+              {key + 1}. {tx.contents.id}
             </a>
           </pre>
         })}
