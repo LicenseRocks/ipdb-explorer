@@ -14,7 +14,7 @@ class TransactionHistory extends Component {
           }
           return <pre key={key}>
             <a href='#' className={className} onClick={() => { selectTx(key) }}>
-              {key + 1}. {tx.contents.id}
+              {key + 1}. {tx.id}
             </a>
           </pre>
         }).reverse()}
@@ -24,42 +24,63 @@ class TransactionHistory extends Component {
 }
 
 class Search extends Component {
+  defaultState () {
+    return {
+      publicKey: '',
+      assetId: ''
+    }
+  }
+
   constructor (props) {
     super(props)
-    this.state = { txId: '159774426470c983bc32d2cacd609bae652fb82f2373da6024c30fb36364c6ea' }
+    this.state = {
+      publicKey: '76Z8DCyNqH2ajnrSYeg86sPg195bsmujJb5VtxNiwGRW',
+      assetId: 'bb0b17fb9781cd9fb44463bb487067a845b333b5e31de79210786f8e8a3e16d4'
+    }
   }
 
-  changeTx (e) {
-    const txId = e.target.value
-    this.setState({txId})
+  changePublicKey (e) {
+    const publicKey = e.target.value
+    this.setState({publicKey})
   }
 
-  findTx (e) {
-    const { txId } = this.state
-    const { findTx } = this.props
-    e.target.blur()
-    findTx(txId)
+  changeAssetId (e) {
+    const assetId = e.target.value
+    this.setState({assetId})
+  }
+
+  search () {
+    const { search } = this.props
+    search(this.state)
+    this.setState(this.defaultState())
   }
 
   render () {
-    const { txId } = this.state
+    const { publicKey, assetId } = this.state
     const { isSearching } = this.props
-    return <div className='input-group my-2'>
-      <input type='text' className='form-control' placeholder='Enter your Tx' value={txId} onChange={this.changeTx.bind(this)} />
-      <span className='input-group-btn'>
+    return <div>
+      <div className='form-group my-2'>
+        <label>Public Key</label>
+        <input type='text' className='form-control' placeholder='Enter a public key' value={publicKey} onChange={this.changePublicKey.bind(this)} />
+      </div>
+      <div className='form-group my-2'>
+        <label>Asset Id</label>
+        <input type='text' className='form-control' placeholder='Enter an asset ID' value={assetId} onChange={this.changeAssetId.bind(this)} />
+      </div>
+      <div className='form-group my-2'>
         {
           isSearching &&
-            <button className='btn btn-primary' disabled type='button'>
+            <button className='btn btn-primary btn-block' disabled type='button'>
               <span className='fa fa-spin fa-cog' /> Searching
             </button>
         }
         {
           !isSearching &&
-            <button className='btn btn-primary' type='button' onClick={this.findTx.bind(this)}>
-              <span className='fa fa-search' /> Tx
+            <button className='btn btn-primary btn-block' type='button' onClick={this.search.bind(this)}>
+              <span className='fa fa-search' /> Search
             </button>
         }
-      </span>
+      </div>
     </div>
   }
 }
@@ -203,9 +224,13 @@ class App extends Component {
     return Object.keys(errors).length > 1
   }
 
+  isTxInHistory (tx) {
+    return this.state.history.find(({id}) => { return id === tx.id })
+  }
+
   findTx (txId) {
     this.setState({isSearching: true})
-    fetch(
+    window.fetch(
       `https://test.ipdb.io/api/v1/transactions/${txId}`, {
         headers: {
           'Accept': 'application/json',
@@ -222,12 +247,79 @@ class App extends Component {
             this.setState({isSearching: false, errors: json})
           })
         } else {
-          response.json().then(contents => {
+          response.json().then(tx => {
             this.setState({
               isSearching: false,
-              history: [...this.state.history, { type: 'tx', contents }],
-              historyPointer: this.state.historyPointer + 1,
               errors: {}
+            })
+
+            if (!this.isTxInHistory(tx)) {
+              this.setState({
+                history: [...this.state.history, tx],
+                historyPointer: this.state.historyPointer + 1
+              })
+            }
+          })
+        }
+      })
+      .catch(response => { console.log(response) })
+  }
+
+  findOutputs (publicKey) {
+    this.setState({isSearching: true})
+    window.fetch(
+      `https://test.ipdb.io/api/v1/outputs?public_key=${publicKey}`, {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        method: 'GET',
+        credentials: 'same-origin'
+      }
+    )
+      .then(response => {
+        if (!response.ok) {
+          response.json().then(json => {
+            this.setState({isSearching: false, errors: json})
+          })
+        } else {
+          response.json().then(contents => {
+            console.log(contents)
+            this.setState({isSearching: false})
+            contents.forEach(({transaction_id, output_index}) => {
+              this.findTx(transaction_id)
+            })
+          })
+        }
+      })
+      .catch(response => { console.log(response) })
+  }
+
+  findTxs (assetId) {
+    this.setState({isSearching: true})
+    window.fetch(
+      `https://test.ipdb.io/api/v1/transactions?asset_id=${assetId}`, {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        method: 'GET',
+        credentials: 'same-origin'
+      }
+    )
+      .then(response => {
+        if (!response.ok) {
+          response.json().then(json => {
+            this.setState({isSearching: false, errors: json})
+          })
+        } else {
+          response.json().then(contents => {
+            console.log(contents)
+            this.setState({isSearching: false})
+            contents.forEach(({id}) => {
+              this.findTx(id)
             })
           })
         }
@@ -239,26 +331,29 @@ class App extends Component {
     this.setState({ historyPointer })
   }
 
+  search ({publicKey, assetId}) {
+    this.findOutputs(publicKey)
+    this.findTxs(assetId)
+  }
+
   render () {
     const { isSearching, history, historyPointer } = this.state
     const [ tx ] = history.slice(historyPointer)
     let result = null
     if (tx) {
-      result = <Tx tx={tx.contents} findTx={this.findTx.bind(this)} />
+      result = <Tx tx={tx} findTx={this.findTx.bind(this)} />
     }
     return (
       <div className='row'>
-        <div className='col-sm-3' />
         <div className='col-sm-3 sidebar'>
           <div className='mt-2'>
-            <h3 className='text-center'>IPDB-Explorer</h3>
             {
               this.hasErrors() &&
                 <div className='alert alert-info'>
                   Couldn't find anything - sorry!
                 </div>
             }
-            <Search isSearching={isSearching} findTx={this.findTx.bind(this)} />
+            <Search isSearching={isSearching} search={this.search.bind(this)} />
             {
               history.length > 0 &&
                 <TransactionHistory history={history} historyPointer={historyPointer} selectTx={this.selectTx.bind(this)} />
