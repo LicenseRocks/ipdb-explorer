@@ -14,3 +14,22 @@
     border-right: 1px solid #ddd;
   }
 }
+
+.update {
+  padding: 5px 10px;
+  margin: 10px;
+  cursor: pointer;
+  border: 1px solid #333;
+  display: inline-block;
+}
+
+.node {
+  fill: #51aae8;
+  stroke: #fff;
+  cursor: pointer;
+}
+
+.link {
+  stroke: #51aae8;
+}
+

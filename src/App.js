@@ -1,5 +1,6 @@
 import React, { Component } from 'react'
 import 'whatwg-fetch'
+import Graph from './Graph'
 
 class TransactionHistory extends Component {
   render () {
@@ -285,7 +286,6 @@ class App extends Component {
           })
         } else {
           response.json().then(contents => {
-            console.log(contents)
             this.setState({isSearching: false})
             contents.forEach(({transaction_id, output_index}) => {
               this.findTx(transaction_id)
@@ -316,7 +316,6 @@ class App extends Component {
           })
         } else {
           response.json().then(contents => {
-            console.log(contents)
             this.setState({isSearching: false})
             contents.forEach(({id}) => {
               this.findTx(id)
@@ -361,7 +360,7 @@ class App extends Component {
           </div>
         </div>
         <div className='col-sm-9 mt-2'>
-          {result}
+          <Graph nodes={history} links={[]} />
         </div>
       </div>
     )
