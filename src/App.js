@@ -17,7 +17,7 @@ class TransactionHistory extends Component {
               {key + 1}. {tx.contents.id}
             </a>
           </pre>
-        })}
+        }).reverse()}
       </div>
     </div>
   }
