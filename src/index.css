@@ -4,11 +4,13 @@
   text-overflow: ellipsis;
 }
 
+.sidebar label {
+  font-variant: all-petite-caps;
+}
+
 @media (min-width: 576px) {
   .sidebar {
     background: #eee;
     border-right: 1px solid #ddd;
-    position: fixed !important;
-    height: 100%;
   }
 }
