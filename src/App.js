@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import 'whatwg-fetch'
-import Graph from './Graph'
+import {InteractiveForceGraph, ForceGraph, ForceGraphNode, ForceGraphLink, ForceGraphArrowLink} from 'react-vis-force';
 
 class TransactionHistory extends Component {
   render () {
@@ -259,6 +259,11 @@ class App extends Component {
                 history: [...this.state.history, tx],
                 historyPointer: this.state.historyPointer + 1
               })
+              tx.inputs.forEach(input => {
+                if (input.fulfills) {
+                  this.findTx(input.fulfills.transaction_id)
+                }
+              })
             }
           })
         }
@@ -335,6 +340,31 @@ class App extends Component {
     this.findTxs(assetId)
   }
 
+  transfers () {
+    const { history } = this.state
+    return history
+      .filter(tx => {
+        return tx.operation === 'TRANSFER'
+      })
+  }
+
+  links () {
+    const { history } = this.state
+    const nodeIds = history.map(node => node.id)
+    return this.transfers().map(tx => {
+      return tx.inputs.map(input => {
+        return {
+          source: tx.id,
+          target: input.fulfills.transaction_id
+        }
+      })
+    })
+    .reduce((a, b) => { return a.concat(b) }, [])
+    .filter(({source, target}) => {
+      return nodeIds.includes(target)
+    })
+  }
+
   render () {
     const { isSearching, history, historyPointer } = this.state
     const [ tx ] = history.slice(historyPointer)
@@ -342,6 +372,17 @@ class App extends Component {
     if (tx) {
       result = <Tx tx={tx} findTx={this.findTx.bind(this)} />
     }
+    const graphLinks = this.links().map((link, key) => {
+      return <ForceGraphArrowLink key={key} link={link} />
+    })
+    const graphNodes = history.map((node, key) => {
+      let fill = '#868e96'
+      if (node.operation === 'CREATE') {
+        fill = '#007bff'
+      }
+      return <ForceGraphNode fill={fill} key={key} node={node} />
+    })
+    console.log(history)
     return (
       <div className='row'>
         <div className='col-sm-3 sidebar'>
@@ -360,7 +401,11 @@ class App extends Component {
           </div>
         </div>
         <div className='col-sm-9 mt-2'>
-          <Graph nodes={history} links={[]} />
+          <InteractiveForceGraph zoom={true} simulationOptions={{ height: 800, width: 800, alpha: 3 }}>
+            {graphNodes}
+            {graphLinks}
+          </InteractiveForceGraph>
+          {result}
         </div>
       </div>
     )
