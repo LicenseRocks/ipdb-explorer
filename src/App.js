@@ -386,30 +386,32 @@ class App extends Component {
       return <ForceGraphNode fill={fill} key={key} node={node} />
     })
     return (
-      <div className='row'>
-        <div className='col-sm-3 sidebar'>
-          <div className='mt-2'>
-            {
-              this.hasErrors() &&
-                <div className='alert alert-info'>
-                  Couldn't find anything - sorry!
-                </div>
-            }
-            <Search isSearching={isSearching} search={this.search.bind(this)} />
-            {
-              history.length > 0 &&
-                <TransactionHistory history={history} historyPointer={historyPointer} selectTxIndex={this.selectTxIndex.bind(this)} />
-            }
+      <div id="app">
+        <div className='row'>
+          <div className='col-sm-3 sidebar'>
+            <div className='mt-2'>
+              {
+                this.hasErrors() &&
+                  <div className='alert alert-info'>
+                    Couldn't find anything - sorry!
+                  </div>
+              }
+              <Search isSearching={isSearching} search={this.search.bind(this)} />
+              {
+                history.length > 0 &&
+                  <TransactionHistory history={history} historyPointer={historyPointer} selectTxIndex={this.selectTxIndex.bind(this)} />
+              }
+            </div>
           </div>
-        </div>
-        <div className='transaction-panel col-sm-9 pt-2'>
-          {history.length > 100 &&
-              <InteractiveForceGraph zoom={true} simulationOptions={{ height: 800, width: 800, alpha: 3 }}>
-                {graphNodes}
-                {graphLinks}
-              </InteractiveForceGraph>
-          }
-          {result}
+          <div className='transaction-panel col-sm-9 pt-2'>
+            {history.length > 100 &&
+                <InteractiveForceGraph zoom={true} simulationOptions={{ height: 800, width: 800, alpha: 3 }}>
+                  {graphNodes}
+                  {graphLinks}
+                </InteractiveForceGraph>
+            }
+            {result}
+          </div>
         </div>
       </div>
     )

@@ -41,3 +41,20 @@
 .transaction-title {
   border-bottom: 2px solid #ddd;
 }
+
+html, body {
+  height: 100%;
+}
+
+#app {
+  height: 100vh;
+  display: flex;
+}
+
+#app > .row {
+  width: 100%;
+}
+
+.sidebar, .transaction-panel {
+  overflow-y: scroll;
+}
