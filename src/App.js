@@ -354,14 +354,14 @@ class App extends Component {
     return this.transfers().map(tx => {
       return tx.inputs.map(input => {
         return {
-          source: tx.id,
-          target: input.fulfills.transaction_id
+          target: tx.id,
+          source: input.fulfills.transaction_id
         }
       })
     })
     .reduce((a, b) => { return a.concat(b) }, [])
     .filter(({source, target}) => {
-      return nodeIds.includes(target)
+      return nodeIds.includes(source)
     })
   }
 
