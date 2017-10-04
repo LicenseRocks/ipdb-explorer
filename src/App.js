@@ -1,11 +1,34 @@
 import React, { Component } from 'react'
 import 'whatwg-fetch'
+import {InteractiveForceGraph, ForceGraph, ForceGraphNode, ForceGraphLink, ForceGraphArrowLink} from 'react-vis-force'
+
+function TransactionEntry ({ label, value, onClick }) {
+  let content = value
+  if (onClick) {
+    content = <a href='#' onClick={onClick}>{value}</a>
+  }
+  return (
+    <div className='row'>
+      <div className='col-sm-3'>
+        <pre className='rounded bg-secondary p-2 text-white'>{label}</pre>
+      </div>
+      <div className='col-sm-9'>
+        <pre className='p-2'>{content}</pre>
+      </div>
+    </div>
+  )
+}
 
 class TransactionHistory extends Component {
   render () {
-    const { history, historyPointer, selectTx } = this.props
+    const { resetHistory, history, historyPointer, selectTxIndex } = this.props
     return <div>
-      <h5>Transactions</h5>
+      <h5>
+        Transactions
+        <small className='float-right'>
+          <a href='#' className='text-danger' onClick={resetHistory}>Reset</a>
+        </small>
+      </h5>
       <div className='list-group'>
         {history.map((tx, key) => {
           let className = 'list-group-item list-group-item-action truncate'
@@ -13,8 +36,8 @@ class TransactionHistory extends Component {
             className = className + ' active'
           }
           return <pre key={key}>
-            <a href='#' className={className} onClick={() => { selectTx(key) }}>
-              {key + 1}. {tx.contents.id}
+            <a href='#' className={className} onClick={(e) => { e.preventDefault(); selectTxIndex(key) }}>
+              <strong>{key + 1}.</strong> {tx.id}
             </a>
           </pre>
         }).reverse()}
@@ -26,68 +49,113 @@ class TransactionHistory extends Component {
 class Search extends Component {
   constructor (props) {
     super(props)
-    this.state = { txId: '159774426470c983bc32d2cacd609bae652fb82f2373da6024c30fb36364c6ea' }
+    this.state = {
+      publicKey: '',
+      assetId: '',
+      showInfo: false,
+    }
   }
 
-  changeTx (e) {
-    const txId = e.target.value
-    this.setState({txId})
+  changePublicKey (e) {
+    const publicKey = e.target.value
+    this.setState({publicKey})
   }
 
-  findTx (e) {
-    const { txId } = this.state
-    const { findTx } = this.props
-    e.target.blur()
-    findTx(txId)
+  changeAssetId (e) {
+    const assetId = e.target.value
+    this.setState({assetId})
+  }
+
+  search () {
+    const { search } = this.props
+    search(this.state)
+  }
+
+  prefill () {
+    this.setState({
+      publicKey: '76Z8DCyNqH2ajnrSYeg86sPg195bsmujJb5VtxNiwGRW',
+      assetId: 'bb0b17fb9781cd9fb44463bb487067a845b333b5e31de79210786f8e8a3e16d4',
+      showInfo: false
+    })
+  }
+
+  toggleInfo () {
+    this.setState({showInfo: !this.state.showInfo})
   }
 
   render () {
-    const { txId } = this.state
-    const { isSearching } = this.props
-    return <div className='input-group my-2'>
-      <input type='text' className='form-control' placeholder='Enter your Tx' value={txId} onChange={this.changeTx.bind(this)} />
-      <span className='input-group-btn'>
+    const { publicKey, assetId, showInfo } = this.state
+    const { isSearching, history } = this.props
+    return <div>
+      <div className='form-group mb-2'>
+        <input type='text' name='publicKey'className='form-control' placeholder='Enter a public key' value={publicKey} onChange={this.changePublicKey.bind(this)} />
+      </div>
+      <div className='form-group mb-2'>
+        <input type='text' name='assetId' className='form-control' placeholder='Enter an asset ID' value={assetId} onChange={this.changeAssetId.bind(this)} />
+      </div>
+      <div className='form-group mb-2'>
         {
           isSearching &&
-            <button className='btn btn-primary' disabled type='button'>
-              <span className='fa fa-spin fa-cog' /> Searching
-            </button>
+            <p className='text-center mt-2'>
+              <button className='btn btn-primary' disabled type='button'>
+                <span className='fa fa-spin fa-cog' /> Searching
+              </button>
+            </p>
         }
         {
           !isSearching &&
-            <button className='btn btn-primary' type='button' onClick={this.findTx.bind(this)}>
-              <span className='fa fa-search' /> Tx
-            </button>
+            <div className='text-center mt-2'>
+              <button className='btn btn-primary px-4' type='button' onClick={this.search.bind(this)}>
+                <span className='fa fa-search' /> Search
+              </button>
+              <br />
+              {
+                history.length === 0 &&
+                  <div>
+                    <p className='text-secondary mt-2'>
+                      <small>
+                        <a href='#' onClick={this.toggleInfo.bind(this)}>(What is this?)</a>
+                      </small>
+                    </p>
+                    {
+                      showInfo &&
+                        <div className='text-left bg-light p-4'>
+                          <p>
+                            Enter a combination of public key <strong>and/or</strong> asset id and the explorer will retrieve:
+                          </p>
+                          <ul>
+                            <li>The associated transactions</li>
+                            <li>The associated assets</li>
+                            <li>All transactions associated with those assets</li>
+                          </ul>
+                          <p>
+                            Try <a href='#' onClick={this.prefill.bind(this)}>these</a> to get you started.
+                          </p>
+                        </div>
+                    }
+                  </div>
+              }
+            </div>
         }
-      </span>
+      </div>
     </div>
   }
 }
 
 class Input extends Component {
   render () {
-    const { input, findTx } = this.props
+    const { input, selectTx } = this.props
     const { owners_before, fulfills } = input
-    return <div className='p-4 bg-light border border-secondary'>
-      <h6>Owners Before</h6>
-      <ul className='list-unstyled'>
-        {(owners_before).map((ownerBefore, key) => {
-          return <li key={key}>
-            <pre>
-              <button className='btn btn-secondary btn-block truncate'>
-                {ownerBefore}
-              </button>
-            </pre>
-          </li>
-        })}
-      </ul>
+    return <div className='input-container'>
+      {(owners_before).map((ownerBefore, key) => {
+        return <TransactionEntry key={key} label='Public Key' value={ownerBefore} />
+      })}
       {
         fulfills &&
           <div>
             <h6>Fulfillments</h6>
-            <ul className='list-unstyled'>
-              <li><pre><button className='btn btn-secondary btn-block truncate' onClick={() => { findTx(fulfills.transaction_id) }}>{fulfills.transaction_id}</button></pre></li>
-            </ul>
+            <TransactionEntry label='Transaction ID' onClick={() => { selectTx(fulfills.transaction_id) }} value={fulfills.transaction_id} />
+            <TransactionEntry label='Output Index' value={fulfills.output_index} />
           </div>
       }
     </div>
@@ -98,33 +166,21 @@ class Output extends Component {
   render () {
     const { output } = this.props
     const { public_keys } = output
-    return <div className='p-4 bg-light border border-secondary'>
-      <h6>Public Keys</h6>
-      <ul className='list-unstyled'>
-        {(public_keys).map((publicKey, key) => {
-          return <li key={key}>
-            <pre>
-              <button className='btn btn-secondary btn-block truncate'>
-                {publicKey}
-              </button>
-            </pre>
-          </li>
-        })}
-      </ul>
-      <h6>Amount</h6>
-      <ul className='list-unstyled'>
-        <li><pre>{output.amount}</pre></li>
-      </ul>
+    return <div className='input-container'>
+      {(public_keys).map((publicKey, key) => {
+        return <TransactionEntry key={key} label='Public Key' value={publicKey} />
+      })}
+      <TransactionEntry label='Amount' value={output.amount} />
     </div>
   }
 }
 
 class Tx extends Component {
   inputs () {
-    const { tx, findTx } = this.props
+    const { tx, selectTx } = this.props
     const { inputs } = tx
     return inputs.map((input, key) => {
-      return <li key={key}><Input input={input} findTx={findTx} /></li>
+      return <Input key={key} input={input} selectTx={selectTx} />
     })
   }
 
@@ -132,7 +188,7 @@ class Tx extends Component {
     const { tx } = this.props
     const { outputs } = tx
     return outputs.map((output, key) => {
-      return <li key={key}><Output output={output} /></li>
+      return <Output key={key} output={output} />
     })
   }
 
@@ -146,34 +202,36 @@ class Tx extends Component {
   }
 
   render () {
-    const { tx, findTx } = this.props
-    return <div>
-      <h3>
-        <pre className='truncate'>{ tx.id }</pre>
-      </h3>
-      <h5>Inputs</h5>
-      <ul className='list-unstyled'>
+    const { tx, selectTx } = this.props
+    return <div className='pt-2'>
+      <h4 className='transaction-title p-3 bg-light mb-4'>
+        <pre className='mb-0'>{tx.id}</pre>
+      </h4>
+      <div className='mb-4'>
+        <h5>Inputs</h5>
         {this.inputs()}
-      </ul>
-      <h5>Outputs</h5>
-      <ul className='list-unstyled'>
+      </div>
+      <hr />
+      <div className='mb-4'>
+        <h5>Outputs</h5>
         {this.outputs()}
-      </ul>
-      <h5>Operation</h5>
-      <pre><pre>{tx.operation}</pre></pre>
+      </div>
+      <hr />
+      <TransactionEntry label='Operation' value={tx.operation} />
+      <hr />
       <h5>Asset</h5>
-      <div className='p-4 bg-light border border-secondary mb-2'>
-        {
-          this.isTransfer() &&
-            <pre><button className='btn btn-secondary btn-block truncate' onClick={() => { findTx(tx.asset.id) }}>{tx.asset.id}</button></pre>
-        }
-        {
-          this.isCreate() &&
+      {
+        this.isTransfer() &&
+          <TransactionEntry label='Asset ID' onClick={() => { selectTx(tx.asset.id) }} value={tx.asset.id} />
+      }
+      {
+        this.isCreate() &&
+          <div className='p-4 bg-light border border-secondary mb-2'>
             <div>
               <pre><small>{ JSON.stringify(tx.asset, null, 2)}</small></pre>
             </div>
-        }
-      </div>
+          </div>
+      }
       <h5>Meta</h5>
       <div className='p-4 bg-light border border-secondary'>
         { !tx.meta && '-'}
@@ -189,7 +247,11 @@ class Tx extends Component {
 class App extends Component {
   constructor (props) {
     super(props)
-    this.state = {
+    this.state = this.defaultState()
+  }
+
+  defaultState () {
+    return {
       tx: null,
       isSearching: false,
       errors: {},
@@ -203,9 +265,13 @@ class App extends Component {
     return Object.keys(errors).length > 1
   }
 
+  isTxInHistory (tx) {
+    return this.state.history.find(({id}) => { return id === tx.id })
+  }
+
   findTx (txId) {
     this.setState({isSearching: true})
-    fetch(
+    window.fetch(
       `https://test.ipdb.io/api/v1/transactions/${txId}`, {
         headers: {
           'Accept': 'application/json',
@@ -222,12 +288,52 @@ class App extends Component {
             this.setState({isSearching: false, errors: json})
           })
         } else {
-          response.json().then(contents => {
+          response.json().then(tx => {
             this.setState({
               isSearching: false,
-              history: [...this.state.history, { type: 'tx', contents }],
-              historyPointer: this.state.historyPointer + 1,
               errors: {}
+            })
+
+            if (!this.isTxInHistory(tx)) {
+              this.setState({
+                history: [...this.state.history, tx],
+                historyPointer: this.state.historyPointer + 1
+              })
+              tx.inputs.forEach(input => {
+                if (input.fulfills) {
+                  this.findTx(input.fulfills.transaction_id)
+                }
+              })
+            }
+          })
+        }
+      })
+      .catch(response => { console.log(response) })
+  }
+
+  findOutputs (publicKey) {
+    this.setState({isSearching: true})
+    window.fetch(
+      `https://test.ipdb.io/api/v1/outputs?public_key=${publicKey}`, {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        method: 'GET',
+        credentials: 'same-origin'
+      }
+    )
+      .then(response => {
+        if (!response.ok) {
+          response.json().then(json => {
+            this.setState({isSearching: false, errors: json})
+          })
+        } else {
+          response.json().then(contents => {
+            this.setState({isSearching: false})
+            contents.forEach(({transaction_id, output_index}) => {
+              this.findTx(transaction_id)
             })
           })
         }
@@ -235,8 +341,79 @@ class App extends Component {
       .catch(response => { console.log(response) })
   }
 
-  selectTx (historyPointer) {
+  findTxs (assetId) {
+    this.setState({isSearching: true})
+    window.fetch(
+      `https://test.ipdb.io/api/v1/transactions?asset_id=${assetId}`, {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        method: 'GET',
+        credentials: 'same-origin'
+      }
+    )
+      .then(response => {
+        if (!response.ok) {
+          response.json().then(json => {
+            this.setState({isSearching: false, errors: json})
+          })
+        } else {
+          response.json().then(contents => {
+            this.setState({isSearching: false})
+            contents.forEach(({id}) => {
+              this.findTx(id)
+            })
+          })
+        }
+      })
+      .catch(response => { console.log(response) })
+  }
+
+  selectTxIndex (historyPointer) {
     this.setState({ historyPointer })
+  }
+
+  selectTx (id) {
+    const { history } = this.state
+    const txIds = history.map(tx => tx.id)
+
+    this.selectTxIndex(txIds.indexOf(id))
+  }
+
+  search ({publicKey, assetId}) {
+    this.findOutputs(publicKey)
+    this.findTxs(assetId)
+  }
+
+  transfers () {
+    const { history } = this.state
+    return history
+      .filter(tx => {
+        return tx.operation === 'TRANSFER'
+      })
+  }
+
+  resetHistory () {
+    this.setState(this.defaultState())
+  }
+
+  links () {
+    const { history } = this.state
+    const nodeIds = history.map(node => node.id)
+    return this.transfers().map(tx => {
+      return tx.inputs.map(input => {
+        return {
+          target: tx.id,
+          source: input.fulfills.transaction_id
+        }
+      })
+    })
+    .reduce((a, b) => { return a.concat(b) }, [])
+    .filter(({source, target}) => {
+      return nodeIds.includes(source)
+    })
   }
 
   render () {
@@ -244,30 +421,77 @@ class App extends Component {
     const [ tx ] = history.slice(historyPointer)
     let result = null
     if (tx) {
-      result = <Tx tx={tx.contents} findTx={this.findTx.bind(this)} />
+      result = <Tx tx={tx} selectTx={this.selectTx.bind(this)} />
     }
+    const graphLinks = this.links().map((link, key) => {
+      return <ForceGraphArrowLink key={key} link={link} />
+    })
+    const graphNodes = history.map((node, key) => {
+      let fill = '#868e96'
+      if (node.operation === 'CREATE') {
+        fill = '#007bff'
+      }
+      return <ForceGraphNode fill={fill} key={key} node={node} />
+    })
     return (
-      <div className='row'>
-        <div className='col-sm-3' />
-        <div className='col-sm-3 sidebar'>
-          <div className='mt-2'>
-            <h3 className='text-center'>IPDB-Explorer</h3>
-            {
-              this.hasErrors() &&
-                <div className='alert alert-info'>
-                  Couldn't find anything - sorry!
+      <div id='app'>
+        {
+          result &&
+            <div className='with-results'>
+              <div className='row'>
+                <div className='col-sm-3 sidebar'>
+                  <div className='mt-2'>
+                    {
+                      this.hasErrors() &&
+                        <div className='alert alert-info'>
+                          Couldn't find anything - sorry!
+                        </div>
+                    }
+                    <Search isSearching={isSearching} search={this.search.bind(this)} history={history} />
+                    <TransactionHistory
+                      resetHistory={this.resetHistory.bind(this)}
+                      history={history}
+                      historyPointer={historyPointer}
+                      selectTxIndex={this.selectTxIndex.bind(this)}
+                    />
+                  </div>
                 </div>
-            }
-            <Search isSearching={isSearching} findTx={this.findTx.bind(this)} />
-            {
-              history.length > 0 &&
-                <TransactionHistory history={history} historyPointer={historyPointer} selectTx={this.selectTx.bind(this)} />
-            }
-          </div>
-        </div>
-        <div className='col-sm-9 mt-2'>
-          {result}
-        </div>
+                <div className='transaction-panel col-sm-9 pt-2'>
+                  {
+                    history.length > 100 &&
+                      <InteractiveForceGraph zoom={true} simulationOptions={{ height: 800, width: 800, alpha: 3 }}>
+                        {graphNodes}
+                        {graphLinks}
+                      </InteractiveForceGraph>
+                  }
+                  {result}
+                </div>
+              </div>
+            </div>
+        }
+        {
+          !result &&
+            <div className='row justify-content-md-center'>
+              <div className='col-sm-6'>
+                <div className='search'>
+                  <h2 className='text-center'>IPDB Explorer</h2>
+                  <div className='mt-2'>
+                    <Search isSearching={isSearching} search={this.search.bind(this)} history={history} />
+                  </div>
+                </div>
+              </div>
+              <footer>
+                <span className='float-left'>
+                  <a href='https://github.com/licenserocks/ipdb-explorer' className='text-secondary'>
+                    <span className='fa fa-github' /> licenserocks/ipdb-explorer
+                  </a>
+                </span>
+                <span className='float-right'>
+                  <a href='http://www.license.rocks' className='text-secondary'>license.rocks © 2017</a>
+                </span>
+              </footer>
+            </div>
+        }
       </div>
     )
   }
