@@ -1,6 +1,19 @@
 import React, { Component } from 'react'
 import 'whatwg-fetch'
-import {InteractiveForceGraph, ForceGraph, ForceGraphNode, ForceGraphLink, ForceGraphArrowLink} from 'react-vis-force';
+import {InteractiveForceGraph, ForceGraph, ForceGraphNode, ForceGraphLink, ForceGraphArrowLink} from 'react-vis-force'
+
+function TransactionEntry ({ label, value }) {
+  return (
+    <div className='row'>
+      <div className='col-sm-3'>
+        <pre className='rounded bg-secondary p-2 text-white'>{label}</pre>
+      </div>
+      <div className='col-sm-9'>
+        <pre className='p-2'>{value}</pre>
+      </div>
+    </div>
+  )
+}
 
 class TransactionHistory extends Component {
   render () {
@@ -15,7 +28,7 @@ class TransactionHistory extends Component {
           }
           return <pre key={key}>
             <a href='#' className={className} onClick={() => { selectTx(key) }}>
-              {key + 1}. {tx.id}
+              <strong>{key + 1}.</strong> {tx.id}
             </a>
           </pre>
         }).reverse()}
@@ -88,28 +101,18 @@ class Search extends Component {
 
 class Input extends Component {
   render () {
-    const { input, findTx } = this.props
+    const { input } = this.props
     const { owners_before, fulfills } = input
-    return <div className='p-4 bg-light border border-secondary'>
-      <h6>Owners Before</h6>
-      <ul className='list-unstyled'>
-        {(owners_before).map((ownerBefore, key) => {
-          return <li key={key}>
-            <pre>
-              <button className='btn btn-secondary btn-block truncate'>
-                {ownerBefore}
-              </button>
-            </pre>
-          </li>
-        })}
-      </ul>
+    return <div className='input-container'>
+      {(owners_before).map((ownerBefore, key) => {
+        return <TransactionEntry key={key} label='Public Key' value={ownerBefore} />
+      })}
       {
         fulfills &&
           <div>
             <h6>Fulfillments</h6>
-            <ul className='list-unstyled'>
-              <li><pre><button className='btn btn-secondary btn-block truncate' onClick={() => { findTx(fulfills.transaction_id) }}>{fulfills.transaction_id}</button></pre></li>
-            </ul>
+            <TransactionEntry label='Transaction ID' value={fulfills.transaction_id} />
+            <TransactionEntry label='Output Index' value={fulfills.output_index} />
           </div>
       }
     </div>
@@ -120,23 +123,11 @@ class Output extends Component {
   render () {
     const { output } = this.props
     const { public_keys } = output
-    return <div className='p-4 bg-light border border-secondary'>
-      <h6>Public Keys</h6>
-      <ul className='list-unstyled'>
-        {(public_keys).map((publicKey, key) => {
-          return <li key={key}>
-            <pre>
-              <button className='btn btn-secondary btn-block truncate'>
-                {publicKey}
-              </button>
-            </pre>
-          </li>
-        })}
-      </ul>
-      <h6>Amount</h6>
-      <ul className='list-unstyled'>
-        <li><pre>{output.amount}</pre></li>
-      </ul>
+    return <div className='input-container'>
+      {(public_keys).map((publicKey, key) => {
+        return <TransactionEntry key={key} label='Public Key' value={publicKey} />
+      })}
+      <TransactionEntry label='Amount' value={output.amount} />
     </div>
   }
 }
@@ -146,7 +137,7 @@ class Tx extends Component {
     const { tx, findTx } = this.props
     const { inputs } = tx
     return inputs.map((input, key) => {
-      return <li key={key}><Input input={input} findTx={findTx} /></li>
+      return <Input key={key} input={input} findTx={findTx} />
     })
   }
 
@@ -154,7 +145,7 @@ class Tx extends Component {
     const { tx } = this.props
     const { outputs } = tx
     return outputs.map((output, key) => {
-      return <li key={key}><Output output={output} /></li>
+      return <Output key={key} output={output} />
     })
   }
 
@@ -168,34 +159,36 @@ class Tx extends Component {
   }
 
   render () {
-    const { tx, findTx } = this.props
-    return <div>
-      <h3>
-        <pre className='truncate'>{ tx.id }</pre>
-      </h3>
-      <h5>Inputs</h5>
-      <ul className='list-unstyled'>
+    const { tx } = this.props
+    return <div className='pt-2'>
+      <h4 className='transaction-title p-3 bg-light mb-4'>
+        <pre className='mb-0'>{tx.id}</pre>
+      </h4>
+      <div className='mb-4'>
+        <h5>Inputs</h5>
         {this.inputs()}
-      </ul>
-      <h5>Outputs</h5>
-      <ul className='list-unstyled'>
+      </div>
+      <hr />
+      <div className='mb-4'>
+        <h5>Outputs</h5>
         {this.outputs()}
-      </ul>
-      <h5>Operation</h5>
-      <pre><pre>{tx.operation}</pre></pre>
+      </div>
+      <hr />
+      <TransactionEntry label='Operation' value={tx.operation} />
+      <hr />
       <h5>Asset</h5>
-      <div className='p-4 bg-light border border-secondary mb-2'>
-        {
-          this.isTransfer() &&
-            <pre><button className='btn btn-secondary btn-block truncate' onClick={() => { findTx(tx.asset.id) }}>{tx.asset.id}</button></pre>
-        }
-        {
-          this.isCreate() &&
+      {
+        this.isTransfer() &&
+          <TransactionEntry label='Asset ID' value={tx.asset.id} />
+      }
+      {
+        this.isCreate() &&
+          <div className='p-4 bg-light border border-secondary mb-2'>
             <div>
               <pre><small>{ JSON.stringify(tx.asset, null, 2)}</small></pre>
             </div>
-        }
-      </div>
+          </div>
+      }
       <h5>Meta</h5>
       <div className='p-4 bg-light border border-secondary'>
         { !tx.meta && '-'}
@@ -382,7 +375,6 @@ class App extends Component {
       }
       return <ForceGraphNode fill={fill} key={key} node={node} />
     })
-    console.log(history)
     return (
       <div className='row'>
         <div className='col-sm-3 sidebar'>
@@ -400,11 +392,13 @@ class App extends Component {
             }
           </div>
         </div>
-        <div className='col-sm-9 mt-2'>
-          <InteractiveForceGraph zoom={true} simulationOptions={{ height: 800, width: 800, alpha: 3 }}>
-            {graphNodes}
-            {graphLinks}
-          </InteractiveForceGraph>
+        <div className='transaction-panel col-sm-9 pt-2'>
+          {history.length > 100 &&
+              <InteractiveForceGraph zoom={true} simulationOptions={{ height: 800, width: 800, alpha: 3 }}>
+                {graphNodes}
+                {graphLinks}
+              </InteractiveForceGraph>
+          }
           {result}
         </div>
       </div>

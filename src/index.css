@@ -1,5 +1,6 @@
 .truncate {
-  max-width: 650px;
+  display: inline-block;
+  width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -11,7 +12,11 @@
 @media (min-width: 576px) {
   .sidebar {
     background: #eee;
-    border-right: 1px solid #ddd;
+    border-right: 1px solid #fff;
+  }
+
+  .transaction-panel {
+    border-left: 1px solid #ddd;
   }
 }
 
@@ -33,3 +38,6 @@
   stroke: #51aae8;
 }
 
+.transaction-title {
+  border-bottom: 2px solid #ddd;
+}
