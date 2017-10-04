@@ -26,7 +26,7 @@ class TransactionHistory extends Component {
       <h5>
         Transactions
         <small className='float-right'>
-          <a href='#' onClick={resetHistory}>Reset</a>
+          <a href='#' className='text-danger' onClick={resetHistory}>Reset</a>
         </small>
       </h5>
       <div className='list-group'>
