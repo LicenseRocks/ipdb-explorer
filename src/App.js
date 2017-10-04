@@ -1,248 +1,10 @@
 import React, { Component } from 'react'
 import 'whatwg-fetch'
-import {InteractiveForceGraph, ForceGraph, ForceGraphNode, ForceGraphLink, ForceGraphArrowLink} from 'react-vis-force'
-
-function TransactionEntry ({ label, value, onClick }) {
-  let content = value
-  if (onClick) {
-    content = <a href='#' onClick={onClick}>{value}</a>
-  }
-  return (
-    <div className='row'>
-      <div className='col-sm-3'>
-        <pre className='rounded bg-secondary p-2 text-white'>{label}</pre>
-      </div>
-      <div className='col-sm-9'>
-        <pre className='p-2'>{content}</pre>
-      </div>
-    </div>
-  )
-}
-
-class TransactionHistory extends Component {
-  render () {
-    const { resetHistory, history, historyPointer, selectTxIndex } = this.props
-    return <div>
-      <h5>
-        Transactions
-        <small className='float-right'>
-          <a href='#' className='text-danger' onClick={resetHistory}>Reset</a>
-        </small>
-      </h5>
-      <div className='list-group'>
-        {history.map((tx, key) => {
-          let className = 'list-group-item list-group-item-action truncate'
-          if (tx === history[historyPointer]) {
-            className = className + ' active'
-          }
-          return <pre key={key}>
-            <a href='#' className={className} onClick={(e) => { e.preventDefault(); selectTxIndex(key) }}>
-              <strong>{key + 1}.</strong> {tx.id}
-            </a>
-          </pre>
-        }).reverse()}
-      </div>
-    </div>
-  }
-}
-
-class Search extends Component {
-  constructor (props) {
-    super(props)
-    this.state = {
-      publicKey: '',
-      assetId: '',
-      showInfo: false,
-    }
-  }
-
-  changePublicKey (e) {
-    const publicKey = e.target.value
-    this.setState({publicKey})
-  }
-
-  changeAssetId (e) {
-    const assetId = e.target.value
-    this.setState({assetId})
-  }
-
-  search () {
-    const { search } = this.props
-    search(this.state)
-  }
-
-  prefill () {
-    this.setState({
-      publicKey: '76Z8DCyNqH2ajnrSYeg86sPg195bsmujJb5VtxNiwGRW',
-      assetId: 'bb0b17fb9781cd9fb44463bb487067a845b333b5e31de79210786f8e8a3e16d4',
-      showInfo: false
-    })
-  }
-
-  toggleInfo () {
-    this.setState({showInfo: !this.state.showInfo})
-  }
-
-  render () {
-    const { publicKey, assetId, showInfo } = this.state
-    const { isSearching, history } = this.props
-    return <div>
-      <div className='form-group mb-2'>
-        <input type='text' name='publicKey'className='form-control' placeholder='Enter a public key' value={publicKey} onChange={this.changePublicKey.bind(this)} />
-      </div>
-      <div className='form-group mb-2'>
-        <input type='text' name='assetId' className='form-control' placeholder='Enter an asset ID' value={assetId} onChange={this.changeAssetId.bind(this)} />
-      </div>
-      <div className='form-group mb-2'>
-        {
-          isSearching &&
-            <p className='text-center mt-2'>
-              <button className='btn btn-primary' disabled type='button'>
-                <span className='fa fa-spin fa-cog' /> Searching
-              </button>
-            </p>
-        }
-        {
-          !isSearching &&
-            <div className='text-center mt-2'>
-              <button className='btn btn-primary px-4' type='button' onClick={this.search.bind(this)}>
-                <span className='fa fa-search' /> Search
-              </button>
-              <br />
-              {
-                history.length === 0 &&
-                  <div>
-                    <p className='text-secondary mt-2'>
-                      <small>
-                        <a href='#' onClick={this.toggleInfo.bind(this)}>(What is this?)</a>
-                      </small>
-                    </p>
-                    {
-                      showInfo &&
-                        <div className='text-left bg-light p-4'>
-                          <p>
-                            Enter a combination of public key <strong>and/or</strong> asset id and the explorer will retrieve:
-                          </p>
-                          <ul>
-                            <li>The associated transactions</li>
-                            <li>The associated assets</li>
-                            <li>All transactions associated with those assets</li>
-                          </ul>
-                          <p>
-                            Try <a href='#' onClick={this.prefill.bind(this)}>these</a> to get you started.
-                          </p>
-                        </div>
-                    }
-                  </div>
-              }
-            </div>
-        }
-      </div>
-    </div>
-  }
-}
-
-class Input extends Component {
-  render () {
-    const { input, selectTx } = this.props
-    const { owners_before, fulfills } = input
-    return <div className='input-container'>
-      {(owners_before).map((ownerBefore, key) => {
-        return <TransactionEntry key={key} label='Public Key' value={ownerBefore} />
-      })}
-      {
-        fulfills &&
-          <div>
-            <h6>Fulfillments</h6>
-            <TransactionEntry label='Tx ID' onClick={() => { selectTx(fulfills.transaction_id) }} value={fulfills.transaction_id} />
-            <TransactionEntry label='Output Index' value={fulfills.output_index} />
-          </div>
-      }
-    </div>
-  }
-}
-
-class Output extends Component {
-  render () {
-    const { output } = this.props
-    const { public_keys } = output
-    return <div className='input-container'>
-      {(public_keys).map((publicKey, key) => {
-        return <TransactionEntry key={key} label='Public Key' value={publicKey} />
-      })}
-      <TransactionEntry label='Amount' value={output.amount} />
-    </div>
-  }
-}
-
-class Tx extends Component {
-  inputs () {
-    const { tx, selectTx } = this.props
-    const { inputs } = tx
-    return inputs.map((input, key) => {
-      return <Input key={key} input={input} selectTx={selectTx} />
-    })
-  }
-
-  outputs () {
-    const { tx } = this.props
-    const { outputs } = tx
-    return outputs.map((output, key) => {
-      return <Output key={key} output={output} />
-    })
-  }
-
-  isTransfer () {
-    const { tx } = this.props
-    return tx.operation === 'TRANSFER'
-  }
-
-  isCreate () {
-    return !this.isTransfer()
-  }
-
-  render () {
-    const { tx, selectTx } = this.props
-    return <div className='pt-2'>
-      <h4 className='transaction-title p-3 bg-light mb-4'>
-        <pre className='mb-0'>{tx.id}</pre>
-      </h4>
-      <div className='mb-4'>
-        <h5>Inputs</h5>
-        {this.inputs()}
-      </div>
-      <hr />
-      <div className='mb-4'>
-        <h5>Outputs</h5>
-        {this.outputs()}
-      </div>
-      <hr />
-      <TransactionEntry label='Operation' value={tx.operation} />
-      <hr />
-      <h5>Asset</h5>
-      {
-        this.isTransfer() &&
-          <TransactionEntry label='Asset ID' onClick={() => { selectTx(tx.asset.id) }} value={tx.asset.id} />
-      }
-      {
-        this.isCreate() &&
-          <div className='p-4 bg-light border border-secondary mb-2'>
-            <div>
-              <pre><small>{ JSON.stringify(tx.asset, null, 2)}</small></pre>
-            </div>
-          </div>
-      }
-      <h5>Meta</h5>
-      <div className='p-4 bg-light border border-secondary'>
-        { !tx.meta && '-'}
-        {
-          tx.meta &&
-            <pre><small>{ JSON.stringify(tx.meta, null, 2)}</small></pre>
-        }
-      </div>
-    </div>
-  }
-}
+import {InteractiveForceGraph, ForceGraphNode, ForceGraphArrowLink} from 'react-vis-force'
+import Tx from './Tx'
+import Search from './Search'
+import TxHistory from './TxHistory'
+import { request } from './Utils'
 
 class App extends Component {
   constructor (props) {
@@ -272,17 +34,7 @@ class App extends Component {
 
   findTx (txId) {
     this.setState({isSearching: true})
-    window.fetch(
-      `https://test.ipdb.io/api/v1/transactions/${txId}`, {
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest'
-        },
-        method: 'GET',
-        credentials: 'same-origin'
-      }
-    )
+    request(`/transactions/${txId}`)
       .then(response => {
         if (!response.ok) {
           response.json().then(json => {
@@ -314,17 +66,7 @@ class App extends Component {
 
   findOutputs (publicKey) {
     this.setState({isSearching: true})
-    window.fetch(
-      `https://test.ipdb.io/api/v1/outputs?public_key=${publicKey}`, {
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest'
-        },
-        method: 'GET',
-        credentials: 'same-origin'
-      }
-    )
+    request(`/outputs?public_key=${publicKey}`)
       .then(response => {
         if (!response.ok) {
           response.json().then(json => {
@@ -344,17 +86,7 @@ class App extends Component {
 
   findTxs (assetId) {
     this.setState({isSearching: true})
-    window.fetch(
-      `https://test.ipdb.io/api/v1/transactions?asset_id=${assetId}`, {
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest'
-        },
-        method: 'GET',
-        credentials: 'same-origin'
-      }
-    )
+    request(`/transactions?asset_id=${assetId}`)
       .then(response => {
         if (!response.ok) {
           response.json().then(json => {
@@ -433,15 +165,12 @@ class App extends Component {
       return <ForceGraphArrowLink key={key} link={link} />
     })
     const graphNodes = history.map((node, key) => {
-      let fill = '#868e96'
-      if (node.operation === 'CREATE') {
-        fill = '#007bff'
-      }
-      return <ForceGraphNode fill={fill} key={key} node={node} onClick={(e) => {
-        e.preventDefault()
-        this.selectTxIndex(key)
-        e.target.blur()
-      }} />
+      return <ForceGraphNode
+        fill={node.operation === 'CREATE' ? '#007bff' : '#868e96'}
+        key={key}
+        node={node}
+        onClick={(e) => { this.selectTxIndex(key) }}
+        />
     })
 
     let sidebarClasses = 'col-sm-3 sidebar'
@@ -458,7 +187,7 @@ class App extends Component {
               <div className='row'>
                 <div className={sidebarClasses}>
                   <p>
-                    <button className='btn btn-sm btn-success' onClick={this.toggleGraph.bind(this)}>Toggle</button>
+                    <button className='btn btn-sm btn-secondary' onClick={this.toggleGraph.bind(this)}>Toggle View</button>
                   </p>
                   {
                     showGraph &&
@@ -477,7 +206,7 @@ class App extends Component {
                             </div>
                         }
                         <Search isSearching={isSearching} search={this.search.bind(this)} history={history} />
-                        <TransactionHistory
+                        <TxHistory
                           resetHistory={this.resetHistory.bind(this)}
                           history={history}
                           historyPointer={historyPointer}
