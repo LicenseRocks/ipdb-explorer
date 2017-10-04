@@ -5,3 +5,5 @@ A simple react app for fetching transactions from [https://test.ipdb.io](https:/
 The transactions can be viewed as a list or graph, and clicking on them reveals the transaction details.
 
 Searching again adds the retrieved transactions to the list.
+
+Feedback and PRs welcome!
