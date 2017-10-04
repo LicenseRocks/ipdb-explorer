@@ -79,35 +79,43 @@ class Search extends Component {
 
   render () {
     const { publicKey, assetId } = this.state
-    const { isSearching } = this.props
+    const { isSearching, history } = this.props
     return <div>
       <div className='form-group my-1'>
         <input type='text' name='publicKey'className='form-control' placeholder='Enter a public key' value={publicKey} onChange={this.changePublicKey.bind(this)} />
       </div>
-      <p className='text-center text-secondary my-0'>
-        <small>
-          and / or
-        </small>
-      </p>
+      {
+        history.length === 0 &&
+          <p className='text-center text-secondary my-0'>
+            <small>
+              and / or
+            </small>
+          </p>
+      }
       <div className='form-group my-1'>
         <input type='text' name='assetId' className='form-control' placeholder='Enter an asset ID' value={assetId} onChange={this.changeAssetId.bind(this)} />
       </div>
       <div className='form-group my-1'>
         {
           isSearching &&
-            <button className='btn btn-primary btn-block' disabled type='button'>
-              <span className='fa fa-spin fa-cog' /> Searching
-            </button>
+            <p className='text-center mt-2'>
+              <button className='btn btn-primary' disabled type='button'>
+                <span className='fa fa-spin fa-cog' /> Searching
+              </button>
+            </p>
         }
         {
           !isSearching &&
-            <p className='text-center mt-2'>
+            <div className='text-center mt-2'>
               <button className='btn btn-primary px-4' type='button' onClick={this.search.bind(this)}>
                 <span className='fa fa-search' /> Search
               </button>
               <br />
-              <button className='btn btn-link btn-sm text-secondary' onClick={this.prefill.bind(this)}>(Enter Sample Data)</button>
-            </p>
+              {
+                history.length === 0 &&
+                  <button className='btn btn-link btn-sm text-secondary' onClick={this.prefill.bind(this)}>(Enter Sample Data)</button>
+              }
+            </div>
         }
       </div>
     </div>
@@ -419,8 +427,13 @@ class App extends Component {
                           Couldn't find anything - sorry!
                         </div>
                     }
-                    <Search isSearching={isSearching} search={this.search.bind(this)} />
-                    <TransactionHistory resetHistory={this.resetHistory.bind(this)} history={history} historyPointer={historyPointer} selectTxIndex={this.selectTxIndex.bind(this)} />
+                    <Search isSearching={isSearching} search={this.search.bind(this)} history={history} />
+                    <TransactionHistory
+                      resetHistory={this.resetHistory.bind(this)}
+                      history={history}
+                      historyPointer={historyPointer}
+                      selectTxIndex={this.selectTxIndex.bind(this)}
+                    />
                   </div>
                 </div>
                 <div className='transaction-panel col-sm-9 pt-2'>
@@ -443,7 +456,7 @@ class App extends Component {
                 <div className='search'>
                   <h2 className='text-center'>IPDB Explorer</h2>
                   <div className='mt-2'>
-                    <Search isSearching={isSearching} search={this.search.bind(this)} />
+                    <Search isSearching={isSearching} search={this.search.bind(this)} history={history} />
                   </div>
                 </div>
               </div>
