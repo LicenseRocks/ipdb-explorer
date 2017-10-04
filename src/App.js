@@ -21,9 +21,14 @@ function TransactionEntry ({ label, value, onClick }) {
 
 class TransactionHistory extends Component {
   render () {
-    const { history, historyPointer, selectTxIndex } = this.props
+    const { resetHistory, history, historyPointer, selectTxIndex } = this.props
     return <div>
-      <h5>Transactions</h5>
+      <h5>
+        Transactions
+        <small className='float-right'>
+          <a href='#' onClick={resetHistory}>Reset</a>
+        </small>
+      </h5>
       <div className='list-group'>
         {history.map((tx, key) => {
           let className = 'list-group-item list-group-item-action truncate'
@@ -42,18 +47,11 @@ class TransactionHistory extends Component {
 }
 
 class Search extends Component {
-  defaultState () {
-    return {
-      publicKey: '',
-      assetId: ''
-    }
-  }
-
   constructor (props) {
     super(props)
     this.state = {
-      publicKey: '76Z8DCyNqH2ajnrSYeg86sPg195bsmujJb5VtxNiwGRW',
-      assetId: 'bb0b17fb9781cd9fb44463bb487067a845b333b5e31de79210786f8e8a3e16d4'
+      publicKey: '',
+      assetId: ''
     }
   }
 
@@ -72,19 +70,29 @@ class Search extends Component {
     search(this.state)
   }
 
+  prefill () {
+    this.setState({
+      publicKey: '76Z8DCyNqH2ajnrSYeg86sPg195bsmujJb5VtxNiwGRW',
+      assetId: 'bb0b17fb9781cd9fb44463bb487067a845b333b5e31de79210786f8e8a3e16d4'
+    })
+  }
+
   render () {
     const { publicKey, assetId } = this.state
     const { isSearching } = this.props
     return <div>
-      <div className='form-group my-2'>
-        <label>Public Key</label>
-        <input type='text' className='form-control' placeholder='Enter a public key' value={publicKey} onChange={this.changePublicKey.bind(this)} />
+      <div className='form-group my-1'>
+        <input type='text' name='publicKey'className='form-control' placeholder='Enter a public key' value={publicKey} onChange={this.changePublicKey.bind(this)} />
       </div>
-      <div className='form-group my-2'>
-        <label>Asset Id</label>
-        <input type='text' className='form-control' placeholder='Enter an asset ID' value={assetId} onChange={this.changeAssetId.bind(this)} />
+      <p className='text-center text-secondary my-0'>
+        <small>
+          and / or
+        </small>
+      </p>
+      <div className='form-group my-1'>
+        <input type='text' name='assetId' className='form-control' placeholder='Enter an asset ID' value={assetId} onChange={this.changeAssetId.bind(this)} />
       </div>
-      <div className='form-group my-2'>
+      <div className='form-group my-1'>
         {
           isSearching &&
             <button className='btn btn-primary btn-block' disabled type='button'>
@@ -93,9 +101,13 @@ class Search extends Component {
         }
         {
           !isSearching &&
-            <button className='btn btn-primary btn-block' type='button' onClick={this.search.bind(this)}>
-              <span className='fa fa-search' /> Search
-            </button>
+            <p className='text-center mt-2'>
+              <button className='btn btn-primary px-4' type='button' onClick={this.search.bind(this)}>
+                <span className='fa fa-search' /> Search
+              </button>
+              <br />
+              <button className='btn btn-link btn-sm text-secondary' onClick={this.prefill.bind(this)}>(Enter Sample Data)</button>
+            </p>
         }
       </div>
     </div>
@@ -207,7 +219,11 @@ class Tx extends Component {
 class App extends Component {
   constructor (props) {
     super(props)
-    this.state = {
+    this.state = this.defaultState()
+  }
+
+  defaultState () {
+    return {
       tx: null,
       isSearching: false,
       errors: {},
@@ -351,6 +367,10 @@ class App extends Component {
       })
   }
 
+  resetHistory () {
+    this.setState(this.defaultState())
+  }
+
   links () {
     const { history } = this.state
     const nodeIds = history.map(node => node.id)
@@ -386,33 +406,59 @@ class App extends Component {
       return <ForceGraphNode fill={fill} key={key} node={node} />
     })
     return (
-      <div id="app">
-        <div className='row'>
-          <div className='col-sm-3 sidebar'>
-            <div className='mt-2'>
-              {
-                this.hasErrors() &&
-                  <div className='alert alert-info'>
-                    Couldn't find anything - sorry!
+      <div id='app'>
+        {
+          result &&
+            <div className='with-results'>
+              <div className='row'>
+                <div className='col-sm-3 sidebar'>
+                  <div className='mt-2'>
+                    {
+                      this.hasErrors() &&
+                        <div className='alert alert-info'>
+                          Couldn't find anything - sorry!
+                        </div>
+                    }
+                    <Search isSearching={isSearching} search={this.search.bind(this)} />
+                    <TransactionHistory resetHistory={this.resetHistory.bind(this)} history={history} historyPointer={historyPointer} selectTxIndex={this.selectTxIndex.bind(this)} />
                   </div>
-              }
-              <Search isSearching={isSearching} search={this.search.bind(this)} />
-              {
-                history.length > 0 &&
-                  <TransactionHistory history={history} historyPointer={historyPointer} selectTxIndex={this.selectTxIndex.bind(this)} />
-              }
+                </div>
+                <div className='transaction-panel col-sm-9 pt-2'>
+                  {
+                    history.length > 100 &&
+                      <InteractiveForceGraph zoom={true} simulationOptions={{ height: 800, width: 800, alpha: 3 }}>
+                        {graphNodes}
+                        {graphLinks}
+                      </InteractiveForceGraph>
+                  }
+                  {result}
+                </div>
+              </div>
             </div>
-          </div>
-          <div className='transaction-panel col-sm-9 pt-2'>
-            {history.length > 100 &&
-                <InteractiveForceGraph zoom={true} simulationOptions={{ height: 800, width: 800, alpha: 3 }}>
-                  {graphNodes}
-                  {graphLinks}
-                </InteractiveForceGraph>
-            }
-            {result}
-          </div>
-        </div>
+        }
+        {
+          !result &&
+            <div className='row justify-content-md-center'>
+              <div className='col-sm-6'>
+                <div className='search'>
+                  <h2 className='text-center'>IPDB Explorer</h2>
+                  <div className='mt-2'>
+                    <Search isSearching={isSearching} search={this.search.bind(this)} />
+                  </div>
+                </div>
+              </div>
+              <footer>
+                <span className='float-left'>
+                  <a href='https://github.com/licenserocks/ipdb-explorer' className='text-secondary'>
+                    <span className='fa fa-github' /> licenserocks/ipdb-explorer
+                  </a>
+                </span>
+                <span className='float-right'>
+                  <a href='http://www.license.rocks' className='text-secondary'>license.rocks © 2017</a>
+                </span>
+              </footer>
+            </div>
+        }
       </div>
     )
   }

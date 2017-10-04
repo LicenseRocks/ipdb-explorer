@@ -9,15 +9,13 @@
   font-variant: all-petite-caps;
 }
 
-@media (min-width: 576px) {
-  .sidebar {
-    background: #eee;
-    border-right: 1px solid #fff;
-  }
+.sidebar {
+  border-right: 1px solid #fff;
+}
 
-  .transaction-panel {
-    border-left: 1px solid #ddd;
-  }
+.transaction-panel {
+  background: #fff;
+  border-left: 1px solid #ddd;
 }
 
 .update {
@@ -46,15 +44,34 @@ html, body {
   height: 100%;
 }
 
-#app {
-  height: 100vh;
-  display: flex;
+.container-fluid {
+  background: #eee;
 }
 
-#app > .row {
-  width: 100%;
+#app {
+  height: 100vh;
+}
+
+.with-results {
+  display: flex;
+  height: 100vh;
 }
 
 .sidebar, .transaction-panel {
   overflow-y: scroll;
+}
+
+.search {
+  margin-top: 75px;
+}
+
+footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 5px;
+  background: #eee;
+  box-shadow: 0px 0px 25px 2px rgba(0, 0, 0, 0.1);
+  border-top: 1px solid #ccc;
 }
