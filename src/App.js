@@ -51,7 +51,8 @@ class Search extends Component {
     super(props)
     this.state = {
       publicKey: '',
-      assetId: ''
+      assetId: '',
+      showInfo: false,
     }
   }
 
@@ -73,29 +74,26 @@ class Search extends Component {
   prefill () {
     this.setState({
       publicKey: '76Z8DCyNqH2ajnrSYeg86sPg195bsmujJb5VtxNiwGRW',
-      assetId: 'bb0b17fb9781cd9fb44463bb487067a845b333b5e31de79210786f8e8a3e16d4'
+      assetId: 'bb0b17fb9781cd9fb44463bb487067a845b333b5e31de79210786f8e8a3e16d4',
+      showInfo: false
     })
   }
 
+  toggleInfo () {
+    this.setState({showInfo: !this.state.showInfo})
+  }
+
   render () {
-    const { publicKey, assetId } = this.state
+    const { publicKey, assetId, showInfo } = this.state
     const { isSearching, history } = this.props
     return <div>
-      <div className='form-group my-1'>
+      <div className='form-group mb-2'>
         <input type='text' name='publicKey'className='form-control' placeholder='Enter a public key' value={publicKey} onChange={this.changePublicKey.bind(this)} />
       </div>
-      {
-        history.length === 0 &&
-          <p className='text-center text-secondary my-0'>
-            <small>
-              and / or
-            </small>
-          </p>
-      }
-      <div className='form-group my-1'>
+      <div className='form-group mb-2'>
         <input type='text' name='assetId' className='form-control' placeholder='Enter an asset ID' value={assetId} onChange={this.changeAssetId.bind(this)} />
       </div>
-      <div className='form-group my-1'>
+      <div className='form-group mb-2'>
         {
           isSearching &&
             <p className='text-center mt-2'>
@@ -113,7 +111,29 @@ class Search extends Component {
               <br />
               {
                 history.length === 0 &&
-                  <button className='btn btn-link btn-sm text-secondary' onClick={this.prefill.bind(this)}>(Enter Sample Data)</button>
+                  <div>
+                    <p className='text-secondary mt-2'>
+                      <small>
+                        <a href='#' onClick={this.toggleInfo.bind(this)}>(What is this?)</a>
+                      </small>
+                    </p>
+                    {
+                      showInfo &&
+                        <div className='text-left bg-light p-4'>
+                          <p>
+                            Enter a combination of public key <strong>and/or</strong> asset id and the explorer will retrieve:
+                          </p>
+                          <ul>
+                            <li>The associated transactions</li>
+                            <li>The associated assets</li>
+                            <li>All transactions associated with those assets</li>
+                          </ul>
+                          <p>
+                            Try <a href='#' onClick={this.prefill.bind(this)}>these</a> to get you started.
+                          </p>
+                        </div>
+                    }
+                  </div>
               }
             </div>
         }
