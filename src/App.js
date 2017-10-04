@@ -154,7 +154,7 @@ class Input extends Component {
         fulfills &&
           <div>
             <h6>Fulfillments</h6>
-            <TransactionEntry label='Transaction ID' onClick={() => { selectTx(fulfills.transaction_id) }} value={fulfills.transaction_id} />
+            <TransactionEntry label='Tx ID' onClick={() => { selectTx(fulfills.transaction_id) }} value={fulfills.transaction_id} />
             <TransactionEntry label='Output Index' value={fulfills.output_index} />
           </div>
       }
@@ -256,7 +256,8 @@ class App extends Component {
       isSearching: false,
       errors: {},
       history: [],
-      historyPointer: -1
+      historyPointer: -1,
+      showGraph: false
     }
   }
 
@@ -406,6 +407,7 @@ class App extends Component {
       return tx.inputs.map(input => {
         return {
           target: tx.id,
+          amount: tx.amount,
           source: input.fulfills.transaction_id
         }
       })
@@ -416,8 +418,12 @@ class App extends Component {
     })
   }
 
+  toggleGraph () {
+    this.setState({showGraph: !this.state.showGraph})
+  }
+
   render () {
-    const { isSearching, history, historyPointer } = this.state
+    const { isSearching, history, historyPointer, showGraph } = this.state
     const [ tx ] = history.slice(historyPointer)
     let result = null
     if (tx) {
@@ -431,39 +437,56 @@ class App extends Component {
       if (node.operation === 'CREATE') {
         fill = '#007bff'
       }
-      return <ForceGraphNode fill={fill} key={key} node={node} />
+      return <ForceGraphNode fill={fill} key={key} node={node} onClick={(e) => {
+        e.preventDefault()
+        this.selectTxIndex(key)
+        e.target.blur()
+      }} />
     })
+
+    let sidebarClasses = 'col-sm-3 sidebar'
+    let transactionPanelClasses = 'transaction-panel col-sm-9 pt-2'
+    if (showGraph) {
+      sidebarClasses = 'col-sm-6 sidebar'
+      transactionPanelClasses = 'transaction-panel col-sm-6 pt-2'
+    }
     return (
       <div id='app'>
         {
           result &&
             <div className='with-results'>
               <div className='row'>
-                <div className='col-sm-3 sidebar'>
-                  <div className='mt-2'>
-                    {
-                      this.hasErrors() &&
-                        <div className='alert alert-info'>
-                          Couldn't find anything - sorry!
-                        </div>
-                    }
-                    <Search isSearching={isSearching} search={this.search.bind(this)} history={history} />
-                    <TransactionHistory
-                      resetHistory={this.resetHistory.bind(this)}
-                      history={history}
-                      historyPointer={historyPointer}
-                      selectTxIndex={this.selectTxIndex.bind(this)}
-                    />
-                  </div>
-                </div>
-                <div className='transaction-panel col-sm-9 pt-2'>
+                <div className={sidebarClasses}>
+                  <p>
+                    <button className='btn btn-sm btn-success' onClick={this.toggleGraph.bind(this)}>Toggle</button>
+                  </p>
                   {
-                    history.length > 100 &&
-                      <InteractiveForceGraph zoom={true} simulationOptions={{ height: 800, width: 800, alpha: 3 }}>
-                        {graphNodes}
-                        {graphLinks}
-                      </InteractiveForceGraph>
+                    showGraph &&
+                    <InteractiveForceGraph zoom={true} simulationOptions={{ animate: true, height: 800, width: 800 }}>
+                      {graphNodes}
+                      {graphLinks}
+                    </InteractiveForceGraph>
                   }
+                  {
+                    !showGraph &&
+                      <div className='mt-2'>
+                        {
+                          this.hasErrors() &&
+                            <div className='alert alert-info'>
+                              Couldn't find anything - sorry!
+                            </div>
+                        }
+                        <Search isSearching={isSearching} search={this.search.bind(this)} history={history} />
+                        <TransactionHistory
+                          resetHistory={this.resetHistory.bind(this)}
+                          history={history}
+                          historyPointer={historyPointer}
+                          selectTxIndex={this.selectTxIndex.bind(this)}
+                        />
+                      </div>
+                  }
+                </div>
+                <div className={transactionPanelClasses}>
                   {result}
                 </div>
               </div>
