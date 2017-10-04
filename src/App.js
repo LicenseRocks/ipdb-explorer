@@ -2,14 +2,18 @@ import React, { Component } from 'react'
 import 'whatwg-fetch'
 import {InteractiveForceGraph, ForceGraph, ForceGraphNode, ForceGraphLink, ForceGraphArrowLink} from 'react-vis-force'
 
-function TransactionEntry ({ label, value }) {
+function TransactionEntry ({ label, value, onClick }) {
+  let content = value
+  if (onClick) {
+    content = <a href='#' onClick={onClick}>{value}</a>
+  }
   return (
     <div className='row'>
       <div className='col-sm-3'>
         <pre className='rounded bg-secondary p-2 text-white'>{label}</pre>
       </div>
       <div className='col-sm-9'>
-        <pre className='p-2'>{value}</pre>
+        <pre className='p-2'>{content}</pre>
       </div>
     </div>
   )
@@ -17,7 +21,7 @@ function TransactionEntry ({ label, value }) {
 
 class TransactionHistory extends Component {
   render () {
-    const { history, historyPointer, selectTx } = this.props
+    const { history, historyPointer, selectTxIndex } = this.props
     return <div>
       <h5>Transactions</h5>
       <div className='list-group'>
@@ -27,7 +31,7 @@ class TransactionHistory extends Component {
             className = className + ' active'
           }
           return <pre key={key}>
-            <a href='#' className={className} onClick={() => { selectTx(key) }}>
+            <a href='#' className={className} onClick={(e) => { e.preventDefault(); selectTxIndex(key) }}>
               <strong>{key + 1}.</strong> {tx.id}
             </a>
           </pre>
@@ -66,7 +70,6 @@ class Search extends Component {
   search () {
     const { search } = this.props
     search(this.state)
-    this.setState(this.defaultState())
   }
 
   render () {
@@ -101,7 +104,7 @@ class Search extends Component {
 
 class Input extends Component {
   render () {
-    const { input } = this.props
+    const { input, selectTx } = this.props
     const { owners_before, fulfills } = input
     return <div className='input-container'>
       {(owners_before).map((ownerBefore, key) => {
@@ -111,7 +114,7 @@ class Input extends Component {
         fulfills &&
           <div>
             <h6>Fulfillments</h6>
-            <TransactionEntry label='Transaction ID' value={fulfills.transaction_id} />
+            <TransactionEntry label='Transaction ID' onClick={() => { selectTx(fulfills.transaction_id) }} value={fulfills.transaction_id} />
             <TransactionEntry label='Output Index' value={fulfills.output_index} />
           </div>
       }
@@ -134,10 +137,10 @@ class Output extends Component {
 
 class Tx extends Component {
   inputs () {
-    const { tx, findTx } = this.props
+    const { tx, selectTx } = this.props
     const { inputs } = tx
     return inputs.map((input, key) => {
-      return <Input key={key} input={input} findTx={findTx} />
+      return <Input key={key} input={input} selectTx={selectTx} />
     })
   }
 
@@ -159,7 +162,7 @@ class Tx extends Component {
   }
 
   render () {
-    const { tx } = this.props
+    const { tx, selectTx } = this.props
     return <div className='pt-2'>
       <h4 className='transaction-title p-3 bg-light mb-4'>
         <pre className='mb-0'>{tx.id}</pre>
@@ -179,7 +182,7 @@ class Tx extends Component {
       <h5>Asset</h5>
       {
         this.isTransfer() &&
-          <TransactionEntry label='Asset ID' value={tx.asset.id} />
+          <TransactionEntry label='Asset ID' onClick={() => { selectTx(tx.asset.id) }} value={tx.asset.id} />
       }
       {
         this.isCreate() &&
@@ -324,8 +327,15 @@ class App extends Component {
       .catch(response => { console.log(response) })
   }
 
-  selectTx (historyPointer) {
+  selectTxIndex (historyPointer) {
     this.setState({ historyPointer })
+  }
+
+  selectTx (id) {
+    const { history } = this.state
+    const txIds = history.map(tx => tx.id)
+
+    this.selectTxIndex(txIds.indexOf(id))
   }
 
   search ({publicKey, assetId}) {
@@ -363,7 +373,7 @@ class App extends Component {
     const [ tx ] = history.slice(historyPointer)
     let result = null
     if (tx) {
-      result = <Tx tx={tx} findTx={this.findTx.bind(this)} />
+      result = <Tx tx={tx} selectTx={this.selectTx.bind(this)} />
     }
     const graphLinks = this.links().map((link, key) => {
       return <ForceGraphArrowLink key={key} link={link} />
@@ -388,7 +398,7 @@ class App extends Component {
             <Search isSearching={isSearching} search={this.search.bind(this)} />
             {
               history.length > 0 &&
-                <TransactionHistory history={history} historyPointer={historyPointer} selectTx={this.selectTx.bind(this)} />
+                <TransactionHistory history={history} historyPointer={historyPointer} selectTxIndex={this.selectTxIndex.bind(this)} />
             }
           </div>
         </div>
