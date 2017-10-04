@@ -6,4 +6,6 @@ The transactions can be viewed as a list or graph, and clicking on them reveals 
 
 Searching again adds the retrieved transactions to the list.
 
+You can view it online at [https://ipdb-explorer.license.rocks](https://ipdb-explorer.license.rocks)
+
 Feedback and PRs welcome!
